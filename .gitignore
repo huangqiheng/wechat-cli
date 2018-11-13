@@ -1,6 +1,8 @@
 # swap files
 *.swp
 *.swo
+debug.js
+debug.ts
 
 # Logs
 logs

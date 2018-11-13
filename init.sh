@@ -2,8 +2,32 @@
 
 main () 
 {
-	echo ''
+	setup_nodejs 10
+	check_npm_g n ts-node typescript
 }
+
+setup_nodejs()
+{
+        if cmd_exists /usr/bin/node; then
+                echo "${Green}node has been installed${Color_Off}"
+                return
+        fi
+
+        version=${1:-'10'}
+
+        curl -sL https://deb.nodesource.com/setup_${version}.x | sudo -E bash -
+        check_apt nodejs
+}
+
+init_colors()
+{
+        [ ! -z $Color_Off ] && return
+        Color_Off='\033[0m'       # Text Reset
+        Red='\033[0;31m'          # Red
+        Green='\033[0;32m'        # Green
+        Yellow='\033[0;33m'       # Yellow
+        Blue='\033[0;34m'         # Blue
+}; init_colors;
 
 repo_update()
 {
@@ -93,6 +117,26 @@ check_sudo()
 	fi
 }
 
+check_apt()
+{
+        for package in "$@"; do
+                if apt_exists $package; then
+                        echo "${package} has been installed"
+                else
+                        apt install -y "$package"
+                fi
+        done
+}
+
+check_npm_g()
+{
+        if cmd_exists "$1"; then
+                echo "$1 has been installed"
+        else
+                npm install -g "$2"
+        fi
+}
+
 check_update()
 {
 	check_sudo
@@ -119,7 +163,7 @@ check_update()
 					repo_changed=1
 					break
 				else
-					log "repo ${the_ppa} has already exists"
+					echo "repo ${the_ppa} has already exists"
 				fi
 			fi
 		done
