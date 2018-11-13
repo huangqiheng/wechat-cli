@@ -82,16 +82,63 @@ repo_update()
 
 	git config --global credential.helper 'cache --timeout 21600'
 	git push
-
 }
 
+check_sudo()
+{
+	if [ $(whoami) != 'root' ]; then
+	    echo "This script should be executed as root or with sudo:"
+	    echo "	${Red}sudo sh $ORIARGS ${Color_Off}"
+	    exit 1
+	fi
+}
 
+check_update()
+{
+	check_sudo
+
+	if [ "$1" = 'f' ]; then
+		apt update -y
+		apt upgrade -y
+		return 0
+	fi
+
+	local last_update=`stat -c %Y  /var/cache/apt/pkgcache.bin`
+	local nowtime=`date +%s`
+	local diff_time=$(($nowtime-$last_update))
+
+	local repo_changed=0
+
+	if [ $# -gt 0 ]; then
+		for the_param in "$@"; do
+			the_ppa=$(echo $the_param | sed 's/ppa:\(.*\)/\1/')
+
+			if [ ! -z $the_ppa ]; then 
+				if ! grep -q "^deb .*$the_ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
+					add-apt-repository -y $the_param
+					repo_changed=1
+					break
+				else
+					log "repo ${the_ppa} has already exists"
+				fi
+			fi
+		done
+	fi 
+
+	if [ $repo_changed -eq 1 ] || [ $diff_time -gt 604800 ]; then
+		apt update -y
+	fi
+
+	if [ $diff_time -gt 6048000 ]; then
+		apt upgrade -y
+	fi 
+}
 
 maintain()
 {
-	check_update
 	[ "$1" = 'update' ] && repo_update && exit
 	[ "$1" = 'help' ] && show_help_exit $2
+	check_update
 }
 
 show_help_exit()
