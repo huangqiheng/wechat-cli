@@ -22,7 +22,7 @@ function onLogout(user) {
 }
 
 async function onMessage (msg) {
-  console.log(msg.toString())
+	console.log(msg.toString());
 }
 
 const bot = new Wechaty()
@@ -38,45 +38,126 @@ bot.start()
 
 //-------------------------------------------------
 
-var curDir = '/'
+var curDir = '/';
+var curTarget = null;
 
 vorpal
-  .command('lsroom', 'list the current items')
-  .action( (args, callback) => {
-	  bot.Room.findAll().then(list=>{
-	      list.forEach( item => {
-		  let topic = item.payload.topic
-		  topic && console.log(item.payload.topic)
-	      })
-	      callback()
-	  })
-  })
+  .command('say <text>', 'say something in room|contact|message')
+  .action((args, callback) => {
+	  if (curTarget) {
+		  curTarget.say(args.text);
+	  }
+	  callback();
+  });
 
 vorpal
-  .command('lscontact', 'list the current items')
+  .command('select [target]', 'select (room|contact|message) target to say something.')
   .action( (args, callback) => {
-	  bot.Contact.findAll().then(list=>{
-	      list.forEach( item => {
-		  let label = item.payload.name
-		  item.payload.signature && (label = label + ' -- [' + item.payload.signature + ']')
-		  console.log(label)
-	      })
-	      callback()
-	  })
-  })
+	console.log(args);
+	bot.Contact.find({name: args.target}).then(contact=>{
+		if (contact) {
+			curTarget = contact;
+			callback();
+			return;
+		}
+
+		bot.Room.find({topic: args.target}).then(room=>{
+			if (room) {
+				curTarget = room;
+			}
+			callback();
+		},
+		err=>{
+			console.log(err);
+			callback();
+		});
+	},
+	err=>{
+		console.log(err);
+		callback();
+	});
+  });
 
 vorpal
-  .command('lsmessage', 'list the current items')
+  .command('show', 'show (room|contact|message) informations')
+  .option('-r, --room [name]', 'List all rooms')
+  .option('-c, --contact [name]', 'List all contact')
+  .option('-m, --message', 'List all message unread')
   .action( (args, callback) => {
-	  bot.Message.findAll().then(list=>{
-	      list.forEach( item => {
-		  console.log(item.payload.text)
-	      })
-	     callback()
-	  })
-  })
+	console.log(args);
+	if (args.options.room) {
+		bot.Room.findAll().then(list=>{
+			list.forEach( item => {
+				let topic = item.payload.topic;
+				if (!topic) return;
+
+				if (args.options.room.length > 0) {
+					let patt = new RegExp(args.options.room, 'g');
+					if (patt.test(topic)) {
+						console.log(topic);
+					}
+				} else {
+					console.log(item.payload.topic);
+				}
+			});
+			callback();
+		}, err=>{
+			console.log(err);
+			callback();
+		});
+	}
+
+	if (args.options.contact) {
+		bot.Contact.findAll().then(list=>{
+			list.forEach( item => {
+				let label = item.payload.name;
+				let signature = text_truncate(item.payload.signature, 25, '!!');
+				item.payload.signature && (label = label + ' -- [' + signature + ']')
+
+				if (args.options.contact.length > 0) {
+					let patt = new RegExp(args.options.contact, 'g');
+					if (patt.test(item.payload.name + item.payload.signature)) {
+						console.log(label)
+					}
+				} else {
+					console.log(label);
+				}
+			});
+			callback();
+		}, err=>{
+			console.log(err);
+			callback();
+		});
+	}
+
+	if (args.options.message) {
+		bot.Message.findAll().then(list=>{
+			list.forEach( item => {
+				//console.log(removeCDATA(item.payload.text));
+				console.log(msg.toString());
+			});
+			callback();
+		}, err=>{
+			console.log(err);
+			callback();
+		});
+	}
+
+  });
+
 
 vorpal
   .delimiter('wechat$')
   .show();
+
+
+function text_truncate(str,n,symb) {
+	return (!n && !symb)? str:(n && !symb)?str.slice(0,n)+"...":str.slice(0,n-symb.length)+symb;
+}
+
+function removeCDATA(str) {
+    var pattern = new RegExp(/\<!\[CDATA\[.*?\/>(.*?)\]\]\>/);
+    var res = pattern.exec(str)[1];
+    return res;
+}
 

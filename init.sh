@@ -4,6 +4,7 @@ main ()
 {
 	setup_nodejs 10
 	check_npm_g n ts-node typescript
+	npm install
 }
 
 setup_nodejs()
@@ -49,7 +50,10 @@ repo_update()
 		git push
 		exit
 	fi
+
+	echo $Yellow
 	echo $pull_result
+	echo $Color_Off
 
 	#---------------------------------------------------------------------
 	# config
@@ -84,7 +88,7 @@ repo_update()
 	if ! echo $push_url | grep -q "${gituser}@"; then
 		new_url=$(echo $push_url | sed -e "s/\/\//\/\/${gituser}@/g")
 		git remote set-url origin $new_url
-		echo "Update remote url: $new_url"
+		echo "${Green}Update remote url: $new_url.${Color_Off}"
 	fi
 
 	#---------------------------------------------------------------------
@@ -98,11 +102,13 @@ repo_update()
 	IFS=; commit_result=$(git commit -m "${input_msg}")
 
 	if echo $commit_result | grep -q 'nothing to commit'; then
-		echo 'Nothing to commit.'
+		echo "${Green}Nothing to commit.${Color_Off}"
 		exit
 	fi
 
+	echo $Yellow
 	echo $commit_result
+	echo $Color_Off
 
 	git config --global credential.helper 'cache --timeout 21600'
 	git push
@@ -121,7 +127,7 @@ check_apt()
 {
         for package in "$@"; do
                 if apt_exists $package; then
-                        echo "${package} has been installed"
+			echo "${Green}${package} has been installed.${Color_Off}"
                 else
                         apt install -y "$package"
                 fi
@@ -131,7 +137,7 @@ check_apt()
 check_npm_g()
 {
         if cmd_exists "$1"; then
-                echo "$1 has been installed"
+		echo "${Green}$1 has been installed.${Color_Off}"
         else
                 npm install -g "$2"
         fi
@@ -163,7 +169,7 @@ check_update()
 					repo_changed=1
 					break
 				else
-					echo "repo ${the_ppa} has already exists"
+					echo "${Green}repo ${the_ppa} has already exists.${Color_Off}"
 				fi
 			fi
 		done
