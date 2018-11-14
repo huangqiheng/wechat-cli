@@ -51,9 +51,7 @@ repo_update()
 		exit
 	fi
 
-	echo $Yellow
-	echo $pull_result
-	echo $Color_Off
+	echo ${Green}${pull_result}${Color_Off}
 
 	#---------------------------------------------------------------------
 	# config
@@ -108,9 +106,7 @@ repo_update()
 		exit
 	fi
 
-	echo $Yellow
-	echo $commit_result
-	echo $Color_Off
+	echo ${Green}${commit_result}${Color_Off}
 
 	git config --global credential.helper 'cache --timeout 21600'
 	git push
