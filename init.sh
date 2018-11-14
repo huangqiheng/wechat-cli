@@ -80,7 +80,9 @@ repo_update()
 	gituser=$(git config --global --get user.gituser)
 	if [ -z $gituser ]; then
 		[ -z $GIT_PUSH_USER ] && read -p 'Input your GitHub username: ' GIT_PUSH_USER
+		[ -z $GIT_PUSH_USER ] && exit 1
 	       	git config --global --add user.gituser $GIT_PUSH_USER
+		gituser=$GIT_PUSH_USER
 	fi
 
 	push_url=$(git remote get-url --push origin)
