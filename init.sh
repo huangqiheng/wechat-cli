@@ -184,6 +184,16 @@ check_update()
 	fi 
 }
 
+apt_exists()
+{
+	[ $(dpkg-query -W -f='${Status}' ${1} 2>/dev/null | grep -c "ok installed") -gt 0 ]
+}
+
+cmd_exists() 
+{
+	type "$(which "$1")" > /dev/null 2>&1
+}
+
 maintain()
 {
 	[ "$1" = 'update' ] && repo_update && exit

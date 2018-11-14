@@ -110,13 +110,18 @@ vorpal
 	if (args.options.contact) {
 		bot.Contact.findAll().then(list=>{
 			list.forEach( item => {
-				let label = item.payload.name;
-				let signature = text_truncate(item.payload.signature, 25, '!!');
-				item.payload.signature && (label = label + ' -- [' + signature + ']')
+				let name = item.payload.name;
+				let alias = item.payload.alias;
+				let signature = item.payload.signature;
+				let signature_short = text_truncate(signature, 45);
+
+				let label = name;
+				alias && (label = label + '[' + alias + ']')
+				signature && (label = label + ' --- ' + signature_short)
 
 				if (args.options.contact.length > 0) {
 					let patt = new RegExp(args.options.contact, 'g');
-					if (patt.test(item.payload.name + item.payload.signature)) {
+					if (patt.test(name + alias + signature)) {
 						console.log(label)
 					}
 				} else {
@@ -134,7 +139,7 @@ vorpal
 		bot.Message.findAll().then(list=>{
 			list.forEach( item => {
 				//console.log(removeCDATA(item.payload.text));
-				console.log(msg.toString());
+				console.log(item.toString());
 			});
 			callback();
 		}, err=>{
@@ -152,6 +157,7 @@ vorpal
 
 
 function text_truncate(str,n,symb) {
+	if (str.length<n) return str;
 	return (!n && !symb)? str:(n && !symb)?str.slice(0,n)+"...":str.slice(0,n-symb.length)+symb;
 }
 
